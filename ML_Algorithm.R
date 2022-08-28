@@ -63,7 +63,7 @@ SNP_adress_final_AMR$AMR <- AMR_Presence[rownames(SNP_adress_final_AMR), "AMR"]
 #Set random seed
 set.seed(151)
 
-# Classify inflamed and control samples. 
+# Classify resistant and susceptible samples. 
 SNP_adress_final_AMR$AMR = factor(SNP_adress_final_AMR$AMR)
 RF_AMR_classify <- randomForest( x=SNP_adress_final_AMR[,1:(ncol(SNP_adress_final_AMR)-1)] , y=SNP_adress_final_AMR[ , ncol(SNP_adress_final_AMR)] , ntree=501, importance=TRUE, proximities=TRUE)
 RF_AMR_classify
@@ -98,3 +98,21 @@ saveRDS( file = "RF_AMR_model.rda" , RF_AMR_classify )
 ############## Code to read back in the files that are saved above ############
 setwd("/Path/to/my/RF_tutorial/")    
 RF_AMR_model <- readRDS("RF_AMR_model.rda") 
+
+################## Using the testing dataset to test accuracy #############
+# Running the model
+predictions = predict(RF_AMR_classify, testingdataset)
+predictions # Looking at output
+
+#Developing the confusion matrix
+confusionMatrix(predictions, as.factor(testingdataset$AMR))
+
+############ Comparing preditions to AMR ##################
+# Appending the prediction results to the end of the dataframe. 
+testingdataset$predictions <- c(predictions)
+
+testingdataset$match <- ifelse(testingdataset$AMR==testingdataset$predictions, "Yes", "No")
+final_table <- testingdataset
+
+########## saving the testing data set & ML algorithm results ######
+saveRDS(final_table, file = "Potential_New_Resistance_Lactamase.rds")
